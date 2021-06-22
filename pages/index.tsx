@@ -1,7 +1,8 @@
-import { useMemo, VFC } from "react";
+import { useMemo, useState, VFC } from "react";
 import axios, { AxiosRequestConfig } from "axios";
 import useSWR from "swr";
 import { User as OUser } from "../interfaces";
+import { useAsyncCallback } from "../hooks";
 
 
 export const axiosInstance = axios.create({
@@ -41,30 +42,40 @@ function useUser(id: number, params: Params) {
 
 type Props = {};
 const Index: VFC<Props> = ({}) => {
-  const id = 101;
-  const params = useMemo(() => ({
-    party: false,
-  }), []);
+  const [id1, setId1] = useState(101);
+  const id2 = 102;
+  const { isLoading, error, result, executor } = useAsyncCallback(async ([ id1, id2 ]) => {
+    const x = await getUsersShow(id1, { party: true });
+    const y = await getUsersShow(id2, { party: false });
+    return [x, y];
+  }, [id1, id2], false);
 
-  const { user, isLoading, isError, message } = useUser(id, params);
 
   if (isLoading) {
     return <div>is Loading...</div>
   }
 
-  if (isError) {
-    return <div>is Error... {message}</div>
+  if (error) {
+    return <div>is Error... {JSON.stringify(error)}</div>
   }
 
 
   return (
     <div>
-      <div>
-        hello ID {user.id} {user.name}
-      </div>
-      <div>
-        funny? {user.funny}
-      </div>
+      <input onInput={(e) => {
+        setId1(+e.currentTarget.value)
+      }} placeholder="id" value={id1} />
+      <button onClick={executor}>
+        Click
+      </button>
+      {result && result.map((user) => {
+        return (
+          <div>
+            ID: {user.data.id},
+            Name: {user.data.name}
+          </div>
+        )
+      })}
     </div>
   );
 };
