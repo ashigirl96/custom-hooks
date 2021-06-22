@@ -1,36 +1,43 @@
-import { DependencyList, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-type PromiseReturnType<T, P> = T extends (args: P) => Promise<infer R> ? R : any;
-export function useAsyncCallback<T extends (args: P) => Promise<any>, R extends PromiseReturnType<T, P>, P>(asyncFn: T, params: P, immediate = true) {
+type PromiseReturnType<T> = T extends () => Promise<infer R> ? R : unknown;
+export function useAsync<Fn extends () => Promise<any> = () => Promise<any>>(asyncFn: Fn) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [result, setResult] = useState<R>(null);
-  const [error, setError] = useState<{ message: string } | null>(null);
+  const [result, setResult] = useState<PromiseReturnType<Fn>>();
+  const [error, setError] = useState<Error>();
 
-  const executor = useCallback(async () => {
+  const callback = useCallback(async () => {
     setIsLoading(true);
-    setResult(null);
-    setError(null);
+    setResult(undefined);
+    setError(undefined);
 
     try {
-      const res = await asyncFn(params);
+      const res = await asyncFn();
       setResult(res);
       setIsLoading(false);
     } catch (e) {
       setIsLoading(false);
       setError(e);
     }
-  }, [asyncFn, params]);
-
-  useEffect(() => {
-    if (immediate) {
-      executor();
-    }
-  }, [executor, params, immediate]);
+  }, [asyncFn]);
 
   return {
     isLoading,
     error,
     result,
-    executor,
+    callback,
+  };
+}
+
+export function useAsyncOnce<T extends () => Promise<any>>(asyncFn: T) {
+  const { isLoading, error, result, callback } = useAsync(asyncFn);
+  useEffect(() => {
+    callback()
+  }, []);
+
+  return {
+    isLoading,
+    error,
+    result,
   };
 };
