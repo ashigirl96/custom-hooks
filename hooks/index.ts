@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { DependencyList, useCallback, useEffect, useState } from "react";
 
-export const useAsyncCallback = (asyncFn: (params: unknown[]) => unknown, params: unknown[], immediate = true) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
+type PromiseReturnType<T, P> = T extends (args: P) => Promise<infer R> ? R : any;
+export function useAsyncCallback<T extends (args: P) => Promise<any>, R extends PromiseReturnType<T, P>, P>(asyncFn: T, params: P, immediate = true) {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [result, setResult] = useState<R>(null);
+  const [error, setError] = useState<{ message: string } | null>(null);
 
   const executor = useCallback(async () => {
     setIsLoading(true);

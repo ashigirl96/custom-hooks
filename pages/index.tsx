@@ -44,11 +44,13 @@ type Props = {};
 const Index: VFC<Props> = ({}) => {
   const [id1, setId1] = useState(101);
   const id2 = 102;
-  const { isLoading, error, result, executor } = useAsyncCallback(async ([ id1, id2 ]) => {
+  const id3 = "hoge";
+
+  const { isLoading, error, result, executor } = useAsyncCallback(async ([ id1, id2, id3 ]) => {
     const x = await getUsersShow(id1, { party: true });
     const y = await getUsersShow(id2, { party: false });
     return [x, y];
-  }, [id1, id2], false);
+  }, [id1, id2, id3] as const, false);
 
 
   if (isLoading) {
